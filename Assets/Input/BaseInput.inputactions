@@ -1,0 +1,54 @@
+{
+    "name": "BaseInput",
+    "maps": [
+        {
+            "name": "BaseInput",
+            "id": "4103ee4b-0fad-42de-acc4-c8a1f24a0d76",
+            "actions": [
+                {
+                    "name": "Spawn Item",
+                    "type": "Button",
+                    "id": "9dfa1f53-5a35-4db5-be07-3b2a20b532ff",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "Tap",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Spawn Bot",
+                    "type": "Button",
+                    "id": "ea0a0dd2-dc63-4103-be60-b940282dcafc",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                }
+            ],
+            "bindings": [
+                {
+                    "name": "",
+                    "id": "74985c76-4249-4e66-8113-1d07d3772060",
+                    "path": "<Keyboard>/i",
+                    "interactions": "Tap",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Spawn Item",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e5fd1857-ad68-4e2b-9f78-2690c1453d58",
+                    "path": "<Keyboard>/b",
+                    "interactions": "Tap",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Spawn Bot",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                }
+            ]
+        }
+    ],
+    "controlSchemes": []
+}
