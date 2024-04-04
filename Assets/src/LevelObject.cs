@@ -2,12 +2,13 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+/// <summary>
+/// Class defining the various objects within the game.
+/// Their distance from the <see cref="Player"/> will be measured and the closest will be highlighted
+/// </summary>
 public class LevelObject : MonoBehaviour
 {
-    /// <summary>
-    /// The Renderer for this object. Will be used to assign materials for highlighting
-    /// </summary>
-    [SerializeField, Tooltip("This object's renderer. Used to highlight")] private Renderer renderer;
+    [SerializeField, Tooltip("This object's renderer. Used to highlight")] private new Renderer renderer;
 
     [Space]
 

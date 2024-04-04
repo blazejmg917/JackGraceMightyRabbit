@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.InputSystem;
 
+/// <summary>
+/// Class that controls all <see cref="LevelObject"/>s in the scene.
+/// Used to set up base level, spawn new objects, save and load objects, and take player input
+/// </summary>
 public class ObjectManager : MonoBehaviour
 {
     //these are any other important scipts that need to have their references stored
@@ -79,27 +83,44 @@ public class ObjectManager : MonoBehaviour
 
     [SerializeField, Tooltip("the number of bots to spawn into the scene")] private int numBotsToSpawn = 1;
 
-    //Below here are a struct and enum I will be using for saving to and writing from files. This will allow me to utilize JSON for my process, as MonoBehaviors and JSON don't quite mix
+    /*
+     * Below here are 2 structs and an enum I will be using for saving to and writing from files. 
+     * This will allow me to utilize JSON for my process, as MonoBehaviors and JSON don't quite mix
+     */
 
     /// <summary>
     /// The Type of object that is being stored to be saved to a file. Can represent character, bot, or item
     /// </summary>
-    public enum ObjectType { PLAYER, BOT, ITEM }
+    public enum ObjectType { 
+        /// <summary>
+        /// The <see cref="Player"/> character
+        /// </summary>
+        PLAYER, 
+        /// <summary>
+        /// A <see cref="Bot"/> object which will highlight blue by default
+        /// </summary>
+        BOT, 
+        /// <summary>
+        /// An <see cref="Item"/> object which will highlight red by default
+        /// </summary>
+        ITEM 
+    }
 
     /// <summary>
-    /// A struct used to store objects for file IO. This will store an object's type and position so it can be respawned into the level at will in the right position
+    /// A struct used to store objects for file IO. This will store a <see cref="LevelObject"/>'s type and position so it can be respawned into the level at will in the right position
     /// </summary>
+    [System.Serializable]
     public struct ObjectStruct
     {
         /// <summary>
         /// The type of object that is being stored.
         /// </summary>
-        public ObjectType objectType;
+        [SerializeField]public ObjectType objectType;
 
         /// <summary>
         /// The worldspace position that this object was located at
         /// </summary>
-        public Vector3 position;
+        [SerializeField] public Vector3 position;
 
         /// <summary>
         /// A constructor for the ObjectStruct class
@@ -112,6 +133,33 @@ public class ObjectManager : MonoBehaviour
             position = pos;
         }
     }
+
+    /*
+     * JSON Serialization has often given me problems with trying to directly serialize Lists
+     * and it gave me that same problem again this time. So the simplest solution is to just create a struct to hold that list. 
+     * It's not a major sink for time or storage and solves a problem, so its a solution I've used before and am using again now
+     */
+    /// <summary>
+    /// A simple wrapper struct for a list of <see cref="ObjectStruct"/>s. 
+    /// </summary>
+    [System.Serializable]
+    public struct ObjectStructHolder { 
+
+        /// <summary>
+        /// the list of objects that this is holding
+        /// </summary>
+        public List<ObjectStruct> objects;
+
+        /// <summary>
+        /// constructor for the struct holder
+        /// </summary>
+        /// <param name="objects">the list to hold</param>
+        public ObjectStructHolder(List<ObjectStruct> objects)
+        {
+            this.objects= objects;
+        }
+    }
+
 
     // Start is called before the first frame update
     void Awake()
@@ -171,7 +219,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Resets the current list of LevelObjects, then finds and adds all LevelObjects that currently exist within the scene
+    /// Resets the current list of <see cref="LevelObject"/>s, then finds and adds all LevelObjects that currently exist within the scene
     /// </summary>
     public void FindAllObjects()
     {
@@ -181,7 +229,7 @@ public class ObjectManager : MonoBehaviour
          * additionally, simply storying as an array may save time on this operation, but since the only operations I plan to be doing on the list in general are AddLast and iteration, 
          * this will be efficient at runtime
          */
-        levelObjects = new List<GameObject>();
+    levelObjects = new List<GameObject>();
         LevelObject[] objects = FindObjectsOfType<LevelObject>();
         foreach (LevelObject obj in objects)
         {
@@ -190,7 +238,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns one item into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
+    /// Spawns one <see cref="Item"/> into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
     /// </summary>
     private void AddRandomItem()
     {
@@ -199,10 +247,13 @@ public class ObjectManager : MonoBehaviour
 
         //set the item's parent to the item holder
         newItem.transform.parent = itemHolder;
+
+        //set the items' name to be "Item"
+        newItem.name = "Item";
     }
 
     /// <summary>
-    /// Adds a number of randomly spawned items equal to the value of the numItemsToSpawn variable
+    /// Adds a number of randomly spawned <see cref="Item"/>s equal to the value of the numItemsToSpawn variable
     /// Used for adding items through the inspector.
     /// </summary>
     public void AddRandomItemsEditor()
@@ -214,7 +265,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Spawns one bot into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
+    /// Spawns one <see cref="Bot"/> into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
     /// </summary>
     public void AddRandomBot()
     {
@@ -223,10 +274,13 @@ public class ObjectManager : MonoBehaviour
 
         //set the bot's parent to the bot holder
         newBot.transform.parent = botHolder;
+
+        //set the object's name to "Bot"
+        newBot.name = "Bot";
     }
 
     /// <summary>
-    /// Adds a number of randomly spawned bots equal to the value of the numBotsToSpawn variable
+    /// Adds a number of randomly spawned <see cref="Bot"/>s equal to the value of the numBotsToSpawn variable
     /// Used for adding bots through the inspector.
     /// </summary>
     public void AddRandomBotsEditor()
@@ -239,7 +293,7 @@ public class ObjectManager : MonoBehaviour
 
 
     /// <summary>
-    /// Instantiates a copy of the given object at a random position and adds it to the list of LevelObjects. 
+    /// Instantiates a copy of the given object at a random position and adds it to the list of <see cref="LevelObject"/>s. 
     /// The random position is bounded by the spawnOrigin and spawnRadius fields
     /// </summary>
     /// <param name="obj">the object to spawn a copy of</param>
@@ -253,7 +307,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Instantiates a copy of the given object at the provided position, and adds it to the list of levelObjects
+    /// Instantiates a copy of the given object at the provided position, and adds it to the list of <see cref="LevelObject"/>s
     /// </summary>
     /// <param name="obj">the object to spawn a copy of</param>
     /// <param name="spawnPos">the position to spawn this object at</param>
@@ -275,7 +329,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Clears out the existing items and bots from the master list and returns it to an empty list. 
+    /// Clears out the existing <see cref="Item"/>s and <see cref="Bot"/>s from the master list and returns it to an empty list. 
     /// Useful for clearing out useless objects for a new test
     /// </summary>
     public void ClearLevelObjects()
@@ -302,6 +356,11 @@ public class ObjectManager : MonoBehaviour
         player.levelObjects = levelObjects;
     }
 
+
+    /*
+     * This function is used to allow players to modify the base and highlighted colors of items and bots at runtime.
+     * I use shared materials to help improve performance, and this modifies the base colors of those materials to match the colors you set in the inspector
+     */
     private void OnValidate()
     {
         if (Application.isPlaying)
@@ -347,7 +406,7 @@ public class ObjectManager : MonoBehaviour
      */
 
     /// <summary>
-    /// helper function to spawn random item on button press
+    /// helper function to spawn random <see cref="Item"/> on button press through the <see cref="AddRandomItem"/> function
     /// </summary>
     public void AddRandomItemButton(InputAction.CallbackContext ctx)
     {
@@ -360,7 +419,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// helper function to spawn random bot on button press
+    /// helper function to spawn random <see cref="Bot"/> on button press through the <see cref="AddRandomBot"/> function
     /// </summary>
     public void AddRandomBotButton(InputAction.CallbackContext ctx)
     {
@@ -373,7 +432,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Helper function for saving the existing level structure on a button press
+    /// Helper function for saving the existing level structure on a button press through the <see cref="SaveLevelToFile"/> function
     /// </summary>
     /// <param name="ctx">the input action</param>
     public void SaveLevel(InputAction.CallbackContext ctx)
@@ -386,7 +445,7 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Helper function for loading the  level structure from a file on a button press
+    /// Helper function for loading the level structure from a file on a button press through the <see cref="LoadFromFile"/> function
     /// </summary>
     /// <param name="ctx">the input action</param>
     public void LoadLevel(InputAction.CallbackContext ctx)
@@ -405,7 +464,7 @@ public class ObjectManager : MonoBehaviour
      */
 
     /// <summary>
-    /// Saves the current state of the level to a file so it can be restored later
+    /// Saves the current state of the level to a file so it can be restored later via <see cref="GameIO.SaveToFile(ObjectStructHolder)"/>
     /// </summary>
     public void SaveLevelToFile()
     {
@@ -434,8 +493,10 @@ public class ObjectManager : MonoBehaviour
             }
         }
 
+        ObjectStructHolder holder = new ObjectStructHolder();
+        holder.objects= objs;
         //once the list has been created, attempt to save it to the file
-        if (gameIO.SaveToFile(objs))
+        if (gameIO.SaveToFile(holder))
         {
             //if saving was succesful, notify the user
             Debug.Log("Level succesfully saved");
@@ -443,13 +504,13 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
-    /// Loads in the currently saved level state, if it exists. 
+    /// Loads in the currently saved level state, if it exists via <see cref="GameIO.ReadFromFile(out ObjectStructHolder)"/>.
     /// Will overwrite the existing level state
     /// </summary>
     public void LoadFromFile()
     {
         //Try to read the objects from the save file
-        List<ObjectStruct> objs;
+        ObjectStructHolder objs;
         if(!gameIO.ReadFromFile(out objs))
         {
             //if the file can't be found or the IO fails to read, end this function
@@ -461,7 +522,7 @@ public class ObjectManager : MonoBehaviour
 
         //create this gameObject reference here 
         GameObject newObj;
-        foreach(ObjectStruct obj in objs)
+        foreach(ObjectStruct obj in objs.objects)
         {
             //for every object struct in the list, check its type and act accordinly
             switch(obj.objectType)
@@ -470,15 +531,17 @@ public class ObjectManager : MonoBehaviour
                 case ObjectType.PLAYER:
                     player.transform.position = obj.position;
                     break;
-                //for bots, spawn the prefab and set its position and parent
+                //for bots, spawn the prefab and set its position, name and parent
                 case ObjectType.BOT:
                     newObj = SpawnObject(botPrefab, obj.position);
                     newObj.transform.parent = botHolder;
+                    newObj.name = "Bot";
                     break;
-                //for items, also spawn the prefab and set position and parent
+                //for items, also spawn the prefab and set position, name, and parent
                 case ObjectType.ITEM:
                     newObj = SpawnObject(itemPrefab, obj.position);
                     newObj.transform.parent = itemHolder;
+                    newObj.name = "item";
                     break;
             }
         }
