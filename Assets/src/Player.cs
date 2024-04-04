@@ -2,45 +2,31 @@ using System.Collections;
 using System.Collections.Generic;
 using Unity.VisualScripting;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 public class Player : MonoBehaviour
 {
     //was considering using a ref variable here for more immediate updates, but they aren't allowed in the version of C# I'm using for this project so we're settling for easy accessors
-    /// <summary>
-    /// A list of all LevelObjects to be checked as the potential closest object
-    /// </summary>
     [SerializeField, Tooltip("all objects to check the positions of")] private List<GameObject> _levelObjects = new List<GameObject>();
 
-    /// <summary>
-    /// A list of all LevelObjects to be checked as the potential closest object
-    /// </summary>
     public List<GameObject> levelObjects
     {
         get { return _levelObjects; }
         set { _levelObjects = value; }
     }
 
-    /// <summary>
-    /// The object that is currently the closest to the player
-    /// </summary>
+
     [SerializeField, Tooltip("the current closest object")] private GameObject closestObject;
 
     //the new closest object; defining this variable here to avoid repeated declaration
-    /// <summary>
-    /// An object that is used to reference new candidates for the closest object before it they are assigned to the final variable
-    /// </summary>
     private GameObject newClosestObject;
 
-    /// <summary>
-    /// the distance between the player and its current closest object
-    /// </summary>
     [SerializeField, Tooltip("the current distance between the player and the closest object")] private float closestDistance = float.MaxValue;
 
     //the distance between this transform and another; defining this variable here to avoid repeated declaration
-    /// <summary>
-    /// the distance between the player and whichever object is currently being checked as the potential new closest object
-    /// </summary>
     private float distance;
+
+
 
     
     /// <summary>
@@ -128,4 +114,5 @@ public class Player : MonoBehaviour
          */
         FindNearestObject();
     }
+
 }

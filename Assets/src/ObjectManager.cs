@@ -190,6 +190,18 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
+    /// Spawns one item into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
+    /// </summary>
+    private void AddRandomItem()
+    {
+        //spawn a new Item Prefab copy
+        GameObject newItem = AddRandomObject(itemPrefab);
+
+        //set the item's parent to the item holder
+        newItem.transform.parent = itemHolder;
+    }
+
+    /// <summary>
     /// Adds a number of randomly spawned items equal to the value of the numItemsToSpawn variable
     /// Used for adding items through the inspector.
     /// </summary>
@@ -199,6 +211,18 @@ public class ObjectManager : MonoBehaviour
         {
             AddRandomItem();
         }
+    }
+
+    /// <summary>
+    /// Spawns one bot into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
+    /// </summary>
+    public void AddRandomBot()
+    {
+        //spawn a new Bot Prefab copy
+        GameObject newBot = AddRandomObject(botPrefab);
+
+        //set the bot's parent to the bot holder
+        newBot.transform.parent = botHolder;
     }
 
     /// <summary>
@@ -213,27 +237,6 @@ public class ObjectManager : MonoBehaviour
         }
     }
 
-    /// <summary>
-    /// Spawns one item into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
-    /// </summary>
-    public void AddRandomItem()
-    {
-        GameObject newItem = AddRandomObject(itemPrefab);
-
-        //set the item's parent to the item holder
-        newItem.transform.parent = itemHolder;
-    }
-
-    /// <summary>
-    /// Spawns one bot into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
-    /// </summary>
-    public void AddRandomBot()
-    {
-        GameObject newBot = AddRandomObject(botPrefab);
-
-        //set the bot's parent to the bot holder
-        newBot.transform.parent = botHolder;
-    }
 
     /// <summary>
     /// Instantiates a copy of the given object at a random position and adds it to the list of LevelObjects. 
@@ -277,14 +280,26 @@ public class ObjectManager : MonoBehaviour
     /// </summary>
     public void ClearLevelObjects()
     {
+        //loop through each object and destroy them
         foreach(GameObject obj in levelObjects)
         {
             if (obj)
             {
-                Destroy(obj);
+                //need to destroy objects differently based on if you are in edit or play mode
+                if (!Application.isPlaying)
+                {
+                    DestroyImmediate(obj);
+                }
+                else
+                {
+                    Destroy(obj);
+                }
             }
         }
+        //create a new list for level objects to ensure there are no null references being used
         levelObjects = new List<GameObject>();
+        //set the player's objects to this list
+        player.levelObjects = levelObjects;
     }
 
     private void OnValidate()
@@ -322,6 +337,72 @@ public class ObjectManager : MonoBehaviour
             highlightBotMat.color = highlightBotColor;
         }
     }
+
+    /*
+     * This chunk of functions is related to inputs. Normally, I'd have the player handling inputs, 
+     * since the player would likely need to also handle other inputs like movement, etc.
+     * But in this project the primary method of manipulating the player is by directly dragging them through the scene
+     * and most things that would require input are handled through this manager, 
+     * so I've decided to allow the manager to handle inputs as well
+     */
+
+    /// <summary>
+    /// helper function to spawn random item on button press
+    /// </summary>
+    public void AddRandomItemButton(InputAction.CallbackContext ctx)
+    {
+        //only call whent the action is fully performed
+        if (ctx.started)
+        {
+            Debug.Log("add random item");
+            AddRandomItem();
+        }
+    }
+
+    /// <summary>
+    /// helper function to spawn random bot on button press
+    /// </summary>
+    public void AddRandomBotButton(InputAction.CallbackContext ctx)
+    {
+        //only call when the action is fully performed
+        if (ctx.started)
+        {
+            Debug.Log("add random bot");
+            AddRandomBot();
+        }
+    }
+
+    /// <summary>
+    /// Helper function for saving the existing level structure on a button press
+    /// </summary>
+    /// <param name="ctx">the input action</param>
+    public void SaveLevel(InputAction.CallbackContext ctx)
+    {
+        //only call when the action is fully performed
+        if (ctx.performed)
+        {
+            SaveLevelToFile();
+        }
+    }
+
+    /// <summary>
+    /// Helper function for loading the  level structure from a file on a button press
+    /// </summary>
+    /// <param name="ctx">the input action</param>
+    public void LoadLevel(InputAction.CallbackContext ctx)
+    {
+        //only call when the action is fully performed
+        if (ctx.performed)
+        {
+            LoadFromFile();
+        }
+    }
+
+    /*
+     * This chunk of functions is directly related to file IO.
+     * The manager has direct access to all important objects in the game, 
+     * so it is the most useful object to manage IO functionality
+     */
 
     /// <summary>
     /// Saves the current state of the level to a file so it can be restored later
@@ -367,26 +448,34 @@ public class ObjectManager : MonoBehaviour
     /// </summary>
     public void LoadFromFile()
     {
+        //Try to read the objects from the save file
         List<ObjectStruct> objs;
         if(!gameIO.ReadFromFile(out objs))
         {
+            //if the file can't be found or the IO fails to read, end this function
             return;
         }
 
+        //clear out the preexisting objects to make way for the new objects to be spawned
         ClearLevelObjects();
 
+        //create this gameObject reference here 
         GameObject newObj;
         foreach(ObjectStruct obj in objs)
         {
+            //for every object struct in the list, check its type and act accordinly
             switch(obj.objectType)
             {
+                //the player object will already exist, so just update its position
                 case ObjectType.PLAYER:
                     player.transform.position = obj.position;
                     break;
+                //for bots, spawn the prefab and set its position and parent
                 case ObjectType.BOT:
                     newObj = SpawnObject(botPrefab, obj.position);
                     newObj.transform.parent = botHolder;
                     break;
+                //for items, also spawn the prefab and set position and parent
                 case ObjectType.ITEM:
                     newObj = SpawnObject(itemPrefab, obj.position);
                     newObj.transform.parent = itemHolder;
@@ -394,5 +483,9 @@ public class ObjectManager : MonoBehaviour
             }
         }
     }
+
+
+
+
 
 }
