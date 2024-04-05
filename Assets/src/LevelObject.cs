@@ -8,7 +8,7 @@ using UnityEngine;
 /// </summary>
 public class LevelObject : MonoBehaviour
 {
-    [SerializeField, Tooltip("This object's renderer. Used to highlight")] private new Renderer renderer;
+    [SerializeField, Tooltip("This object's renderer component. used to highlight and unhighlight the object")] private new Renderer renderer;
 
     [Space]
 
@@ -37,6 +37,23 @@ public class LevelObject : MonoBehaviour
         else
         {
             renderer.material = baseMat;
+        }
+    }
+
+    /// <summary>
+    /// Gets a material from this object
+    /// </summary>
+    /// <param name="highlighted">whether to return the highlighted material or the base version</param>
+    /// <returns>the desired material on this object</returns>
+    public Material GetMat(bool highlighted)
+    {
+        if (highlighted)
+        {
+            return highlightMat;
+        }
+        else
+        {
+            return baseMat;
         }
     }
 }

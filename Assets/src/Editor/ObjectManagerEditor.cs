@@ -13,6 +13,8 @@ public class ObjectManagerEditor : Editor
         ObjectManager objMan = (ObjectManager)target;
 
         base.OnInspectorGUI();
+
+        //add a button to spawn items
         if (GUILayout.Button("Spawn Items"))
         {
             if (objMan.IsSceneBound())
@@ -21,6 +23,8 @@ public class ObjectManagerEditor : Editor
                 EditorUtility.SetDirty(objMan);
             }
         }
+
+        //add a button to spawn bots
         if (GUILayout.Button("Spawn Bots"))
         {
             if (objMan.IsSceneBound())
@@ -29,6 +33,8 @@ public class ObjectManagerEditor : Editor
                 EditorUtility.SetDirty(objMan);
             }
         }
+
+        //add a button to clear all LevelObjects
         if (GUILayout.Button("Clear Level"))
         {
             if (objMan.IsSceneBound())

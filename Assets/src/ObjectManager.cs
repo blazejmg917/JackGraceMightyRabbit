@@ -33,7 +33,9 @@ public class ObjectManager : MonoBehaviour
     /*
      * master list that contains all items and bots; 
      * was going to store as a LinkedList due to the slightly improved efficiency of adding to the list, 
-     * but it isn't serializable to the editor so I swapped for readability
+     * but it isn't serializable to the inspector so I swapped it for readability
+     * Adding isn't a super common operation and doesn't much harm efficiency right now anyways, 
+     * so I think that going for readability is a good option
      */
     [SerializeField, Tooltip("the main list that contains all level objects")] private List<GameObject> levelObjects = new List<GameObject>();
 
@@ -41,29 +43,39 @@ public class ObjectManager : MonoBehaviour
 
     [SerializeField, Tooltip("A reference to the player object")]private Player player;
 
-    //this is where all materials are stored for both item and bot objects. This allows for editor-time adjustement of colors
+    /*
+     * this is where all materials are stored for both item and bot objects. This allows for editor-time adjustement of colors
+     * Additionally, using shared materials will help efficiency for the color change operations, since only a small selection of materials are needed
+     */
     [Header("Materials")]
     
     [SerializeField, Tooltip("the base material for Item objects. Used by default")] private Material baseItemMat;
 
-    [SerializeField, Tooltip("the highlighted material for Item object. Used when close to the player")] private Material highlightItemMat;
+    [SerializeField, Tooltip("the highlighted material for Item objects. Used when close to the player")] private Material highlightItemMat;
 
     [SerializeField, Tooltip("the base material for Bot objects. Used by default")] private Material baseBotMat;
 
-    [SerializeField, Tooltip("the highlighted material for Bot object. Used when close to the player")] private Material highlightBotMat;
+    [SerializeField, Tooltip("the highlighted material for Bot objects. Used when close to the player")] private Material highlightBotMat;
 
-    //this is where the colors for both item and bot objects are stored. This allows for direct manipulation of material colors within the main editor without having to open up the materials directly
+    /*
+     * this is where the colors for both item and bot objects are stored. 
+     * This allows for direct manipulation of material colors within the main editor without having to open up the materials directly
+     */
     [Header("Colors")]
 
     [SerializeField, Tooltip("the base color for Item objects. Used by default")] private Color baseItemColor = Color.white;
 
-    [SerializeField, Tooltip("the highlighted color for Item object. Used when close to the player")] private Color highlightItemColor = Color.red;
+    [SerializeField, Tooltip("the highlighted color for Item objects. Used when close to the player")] private Color highlightItemColor = Color.red;
 
     [SerializeField, Tooltip("the base color for Bot objects. Used by default")] private Color baseBotColor = Color.white;
 
-    [SerializeField, Tooltip("the highlighted color for Bot object. Used when close to the player")] private Color highlightBotColor = Color.blue;
+    [SerializeField, Tooltip("the highlighted color for Bot objects. Used when close to the player")] private Color highlightBotColor = Color.blue;
 
-    //the following fields are used to handle validation for color changes such that they are automatically applied to the materials
+    /*
+     * the following fields are used to handle validation for color changes such that they are automatically applied to the materials
+     * This works by checking the previous color validated color values against the current ones to determine if they have changed
+     * If they have, the color is updated and applied to its corresponding material. This makes modifying material colors right from the editor scene view very easy
+     */
     private Color prevBaseItemColor = Color.white;
 
     private Color prevHighlightItemColor = Color.red;
@@ -72,7 +84,10 @@ public class ObjectManager : MonoBehaviour
 
     private Color prevHighlightBotColor = Color.blue;
 
-    //this is where values used for spawning new objects are defined. Allows for the area of spawning to be defined
+    /*
+     * this is where values used for spawning new objects are defined.
+     * Allows for you to manipulate where and how objects are randomly spawned
+     */
     [Header("Spawning")]
 
     [SerializeField, Tooltip("the origin for spawning objects. Set to the world origin by default")] private Vector3 spawnOrigin = Vector3.zero;
@@ -89,7 +104,7 @@ public class ObjectManager : MonoBehaviour
      */
 
     /// <summary>
-    /// The Type of object that is being stored to be saved to a file. Can represent character, bot, or item
+    /// The Type of object that is being stored to be saved to a file. Can represent <see cref="Player"/>, <see cref="Bot"/>, or <see cref="Item"/>
     /// </summary>
     public enum ObjectType { 
         /// <summary>
@@ -113,12 +128,12 @@ public class ObjectManager : MonoBehaviour
     public struct ObjectStruct
     {
         /// <summary>
-        /// The type of object that is being stored.
+        /// The type of <see cref="LevelObject"/> that is being stored.
         /// </summary>
         [SerializeField]public ObjectType objectType;
 
         /// <summary>
-        /// The worldspace position that this object was located at
+        /// The worldspace position that this <see cref="LevelObject"/> was located at
         /// </summary>
         [SerializeField] public Vector3 position;
 
@@ -136,17 +151,17 @@ public class ObjectManager : MonoBehaviour
 
     /*
      * JSON Serialization has often given me problems with trying to directly serialize Lists
-     * and it gave me that same problem again this time. So the simplest solution is to just create a struct to hold that list. 
-     * It's not a major sink for time or storage and solves a problem, so its a solution I've used before and am using again now
+     * and it gave me that same problem again this time. So the simplest solution is to just create a wrapper struct to hold that list. 
+     * It's not a major sink for time or storage and solves a problem, so its a solution I've used before and am using again now.
      */
     /// <summary>
     /// A simple wrapper struct for a list of <see cref="ObjectStruct"/>s. 
     /// </summary>
     [System.Serializable]
-    public struct ObjectStructHolder { 
+    public struct ObjectStructHolder {
 
         /// <summary>
-        /// the list of objects that this is holding
+        /// the list of <see cref="ObjectStruct"/>s that this is holding
         /// </summary>
         public List<ObjectStruct> objects;
 
@@ -198,8 +213,6 @@ public class ObjectManager : MonoBehaviour
             }
         }
 
-
-
         if (!player)
         {
             //if the player has not been manually set, find it in the scene.
@@ -214,6 +227,7 @@ public class ObjectManager : MonoBehaviour
         {
             FindAllObjects();
         }
+
         //once the game begins, the list of objects should be passed to the player so that it can begin checking for nearest objects
         player.levelObjects = levelObjects;
     }
@@ -224,12 +238,12 @@ public class ObjectManager : MonoBehaviour
     public void FindAllObjects()
     {
         /*
-         * this will allow me to get all LevelObjects and add them to the master list for quick and efficient access. Caching them here prevents the extra overhead of searching for all of them every time,
+         * this will allow me to get all LevelObjects and add them to the master list for quick and efficient access. 
+         * Caching them here prevents the extra overhead of searching for all of them every time,
          * and since it should realistically only be called in editor mode, it does not matter that this particular operation is expensive.
-         * additionally, simply storying as an array may save time on this operation, but since the only operations I plan to be doing on the list in general are AddLast and iteration, 
-         * this will be efficient at runtime
+         * additionally, simply storing as an array may save time on this operation, but since it is an uncommon operation I am not particularly worried about the conversion cost
          */
-    levelObjects = new List<GameObject>();
+        levelObjects = new List<GameObject>();
         LevelObject[] objects = FindObjectsOfType<LevelObject>();
         foreach (LevelObject obj in objects)
         {
@@ -238,9 +252,30 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
+    /// helper function to spawn one <see cref="Item"/> into the scene at a given position
+    /// </summary>
+    /// <param name="position">the position to spawn the item at</param>
+    /// <returns>the newly spawned item</returns>
+    public GameObject AddItem(Vector3 position)
+    {
+        //spawn a new Item Prefab copy
+        GameObject newItem = SpawnObject(itemPrefab, position);
+
+        //set the item's parent to the item holder
+        newItem.transform.parent = itemHolder;
+
+        //set the items' name to be "Item"
+        newItem.name = "Item";
+
+        //return the item
+        return newItem;
+    }
+
+    /// <summary>
     /// Spawns one <see cref="Item"/> into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
     /// </summary>
-    private void AddRandomItem()
+    /// <returns>The newly spawned Item</returns>
+    public GameObject AddRandomItem()
     {
         //spawn a new Item Prefab copy
         GameObject newItem = AddRandomObject(itemPrefab);
@@ -250,6 +285,9 @@ public class ObjectManager : MonoBehaviour
 
         //set the items' name to be "Item"
         newItem.name = "Item";
+
+        //return the item
+        return newItem;
     }
 
     /// <summary>
@@ -265,9 +303,30 @@ public class ObjectManager : MonoBehaviour
     }
 
     /// <summary>
+    /// helper function to spawn one <see cref="Bot"/> into the scene at a given position
+    /// </summary>
+    /// <param name="position">the position to spawn the bot at</param>
+    /// <returns>the newly spawned bot</returns>
+    public GameObject AddBot(Vector3 position)
+    {
+        //spawn a new Bot Prefab copy
+        GameObject newBot = SpawnObject(botPrefab, position);
+
+        //set the bot's parent to the bot holder
+        newBot.transform.parent = botHolder;
+
+        //set the bot's name to be "Bot"
+        newBot.name = "Bot";
+
+        //return the bot
+        return newBot;
+    }
+
+    /// <summary>
     /// Spawns one <see cref="Bot"/> into the scene at a random position. Position is bounded by the spawnOrigin and spawnRadius fields
     /// </summary>
-    public void AddRandomBot()
+    /// <returns>The newly spawned Bot</returns>
+    public GameObject AddRandomBot()
     {
         //spawn a new Bot Prefab copy
         GameObject newBot = AddRandomObject(botPrefab);
@@ -277,6 +336,9 @@ public class ObjectManager : MonoBehaviour
 
         //set the object's name to "Bot"
         newBot.name = "Bot";
+
+        //return the bot
+        return newBot;
     }
 
     /// <summary>
@@ -302,6 +364,7 @@ public class ObjectManager : MonoBehaviour
     {
         //this generates a random position around the spawn origin within the defined spawn radius for the new object to be created
         Vector3 spawnPos = spawnOrigin + Random.onUnitSphere * Random.Range(0, spawnRadius);
+
         //spawn in the new object at the random position 
         return SpawnObject(obj, spawnPos);
     }
@@ -316,8 +379,10 @@ public class ObjectManager : MonoBehaviour
     {
         //instantiate the given object at the given position
         GameObject newObj = Instantiate(obj, spawnPos, Quaternion.identity);
+
         //add the newly spawned object into the master list for quick reference
         levelObjects.Add(newObj);
+
         //if the game is actively being played, update the player's list, and tell the player to check if this new object is the new closest object
         if (Application.isPlaying)
         {
@@ -350,8 +415,10 @@ public class ObjectManager : MonoBehaviour
                 }
             }
         }
+
         //create a new list for level objects to ensure there are no null references being used
         levelObjects = new List<GameObject>();
+
         //set the player's objects to this list
         player.levelObjects = levelObjects;
     }
@@ -368,6 +435,7 @@ public class ObjectManager : MonoBehaviour
             //prevents this chunk of code from running while scene loads, as it is unnecessary
             return;
         }
+
         //if the base item color has been changed, update its material to match
         if (!baseItemColor.Equals(prevBaseItemColor))
         {
@@ -413,7 +481,7 @@ public class ObjectManager : MonoBehaviour
         //only call whent the action is fully performed
         if (ctx.started)
         {
-            Debug.Log("add random item");
+            Debug.Log("adding random item");
             AddRandomItem();
         }
     }
@@ -426,7 +494,7 @@ public class ObjectManager : MonoBehaviour
         //only call when the action is fully performed
         if (ctx.started)
         {
-            Debug.Log("add random bot");
+            Debug.Log("adding random bot");
             AddRandomBot();
         }
     }
@@ -493,8 +561,10 @@ public class ObjectManager : MonoBehaviour
             }
         }
 
+        //create a new struct holder to hold the list and be saved to the file
         ObjectStructHolder holder = new ObjectStructHolder();
-        holder.objects= objs;
+        holder.objects = objs;
+
         //once the list has been created, attempt to save it to the file
         if (gameIO.SaveToFile(holder))
         {
@@ -531,24 +601,94 @@ public class ObjectManager : MonoBehaviour
                 case ObjectType.PLAYER:
                     player.transform.position = obj.position;
                     break;
+
                 //for bots, spawn the prefab and set its position, name and parent
                 case ObjectType.BOT:
                     newObj = SpawnObject(botPrefab, obj.position);
                     newObj.transform.parent = botHolder;
                     newObj.name = "Bot";
                     break;
+
                 //for items, also spawn the prefab and set position, name, and parent
                 case ObjectType.ITEM:
                     newObj = SpawnObject(itemPrefab, obj.position);
                     newObj.transform.parent = itemHolder;
-                    newObj.name = "item";
+                    newObj.name = "Item";
                     break;
             }
         }
+        player.levelObjects = levelObjects;
+        player.Reset();
     }
 
+    /*
+     * Below here is a collection of functions that are exclusively used for testing purposes. 
+     * These methods expose a few variables to code in such a way that greatly aids testing,
+     * and are not used elsewhere
+     */
+    
+    /// <summary>
+    /// returns a list of all <see cref="LevelObject"/>s that are being tracked by this manager
+    /// </summary>
+    /// <returns>all <see cref="LevelObject"/>s being tracked</returns>
+    public List<GameObject> GetLevelObjects()
+    {
+        return levelObjects;
+    }
 
+    /// <summary>
+    /// Gets the maximum allowed spawn radius for random objects. used for testing
+    /// </summary>
+    /// <returns>the maximum spawn radius</returns>
+    public float GetSpawnRadius()
+    {
+        return spawnRadius; 
+    }
 
+    /// <summary>
+    /// Gets the origin point for random spawning. used for testing
+    /// </summary>
+    /// <returns>the spawn origin point</returns>
+    public Vector3 GetSpawnOrigin()
+    {
+        return spawnOrigin;
+    }
+
+    /// <summary>
+    /// Gets the number of bots to be spawned when you press the inspector button for the <see cref="AddRandomBotsEditor"/> method. used for testing
+    /// </summary>
+    /// <returns>the number of items to be spawned by the <see cref="AddRandomBotsEditor"/></returns>
+    public int GetBotSpawnCount()
+    {
+        return numBotsToSpawn;
+    }
+
+    /// <summary>
+    /// Sets the number of bots to be spawned when you press the inspector button for the <see cref="AddRandomBotsEditor"/> method. used for testing
+    /// </summary>
+    /// <param name="botSpawnCount">the number of items to be spawned by the <see cref="AddRandomBotsEditor"/></param>
+    public void SetBotSpawnCount(int botSpawnCount)
+    {
+        numBotsToSpawn = botSpawnCount;
+    }
+
+    /// <summary>
+    /// Gets the number of items to be spawned when you press the inspector button for the <see cref="AddRandomItemsEditor"/> method. used for testing
+    /// </summary>
+    /// <returns>the number of items to be spawned by the <see cref="AddRandomItemsEditor"/> method</returns>
+    public int GetItemSpawnCount()
+    {
+        return numItemsToSpawn;
+    }
+
+    /// <summary>
+    /// Sets the number of items to be spawned when you press the inspector button for the <see cref="AddRandomItemsEditor"/> method. used for testing
+    /// </summary>
+    /// <param name="itemSpawnCount">the number of items to be spawned by the <see cref="AddRandomItemsEditor"/> method</param>
+    public void SetItemSpawnCount(int itemSpawnCount)
+    {
+        numBotsToSpawn = itemSpawnCount;
+    }
 
 
 }

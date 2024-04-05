@@ -32,13 +32,14 @@ public class GameIO : MonoBehaviour
         try
         {
             StreamWriter sw = new StreamWriter(filepath, false);
+            //Debug.Log(js);
             sw.Write(js);
             sw.Close();
         }
         catch (Exception e)
         {
             //if it fails in any way, display error message and return false
-            Debug.Log("Failure writing to file: " + e.Message);
+            Debug.LogWarning("Failure writing to file: " + e.Message);
             return false;
         }
 
@@ -60,14 +61,15 @@ public class GameIO : MonoBehaviour
         //if that file doesn't already exist, data cannot be read. return false
         if (!System.IO.File.Exists(filepath))
         {
-            Debug.LogWarning("file does not exist at filepath " + filepath);
+            Debug.LogError("file does not exist at filepath " + filepath);
             return false;
         }
 
         /*
          * create the basic string and attempt to read the save file to it.
          * Technically there should probably be some extra encryption/sanitization steps here to prevent problems, 
-         * but given that this product will only see a few people, it's not a major concern
+         * but given that this product will only see a few people, does not store sensitive data, 
+         * and is not in a position to cause any real hard it's not a major concern
          */
         string js;
         try
@@ -97,5 +99,14 @@ public class GameIO : MonoBehaviour
 
         //if you made it here the file should be all good to go, so return true
         return true;
+    }
+
+    /// <summary>
+    /// Gets the full filepath of the file that saved games are saved to
+    /// </summary>
+    /// <returns>the file where saved games are stored</returns>
+    public string GetFilePath()
+    {
+        return Application.persistentDataPath + "/" + savedFileName;
     }
 }

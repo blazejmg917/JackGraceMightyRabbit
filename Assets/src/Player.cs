@@ -37,14 +37,29 @@ public class Player : MonoBehaviour
      * this is a set of publicly viewable metrics keeping track of the number of milliseconds it takes to complete a full update frame's worth of checks on average
      * I think this will be a simple but useful tool for testing my different optimization strategies
      */
-    [SerializeField, Tooltip("the average time it takes for on frame of FixedUpdate to run while searching for the closest object")]private float averageProcessTime = 0;
+    [SerializeField, Tooltip("the average time it takes for one frame of FixedUpdate to run while searching for the closest object")]private float averageProcessTime = 0;
+
     //keeps track of how many frames have been run to handle average time
     [SerializeField, Tooltip("the number of frames the game has been running for")]private long numFramesRun = 0;
+
     //keeps track of how long the current frame runs
     [SerializeField, Tooltip("the time it is taking for the current frame of FixedUpdate to run while searching for the closest object")] private float frameProcessTime = 0;
 
 
+    /// <summary>
+    /// Resets the player's closest object and distance to their base values to allow full reset of structure.
+    /// This helps to avoid issues with the overlapsphere method of finding closest files when loading from a file
+    /// </summary>
+    public void Reset()
+    {
+        //reset the starting distances
+        closestDistance = float.MaxValue;
+        distance = 0;
 
+        //set the closest objects to null
+        closestObject = null;
+        newClosestObject = null;
+    }
 
 
     /// <summary>
@@ -68,6 +83,16 @@ public class Player : MonoBehaviour
     }
 
     /// <summary>
+    /// Creates an overlapSphere around the player using the distance to the closest object as its radius, 
+    /// and checks if any caught <see cref="LevelObject"/>s are closer to the <see cref="Player"/> than the current closest object.
+    /// </summary>
+    public void FindNearestObjectOverlap()
+    {
+        //use the closest distance as the radius by default
+        FindNearestObjectOverlap(closestDistance);
+    }
+
+    /// <summary>
     /// Creates an overlapSphere around the player with the given radius, 
     /// and checks if any caught <see cref="LevelObject"/>s are closer to the <see cref="Player"/> than the current closest object.
     /// </summary>
@@ -80,8 +105,10 @@ public class Player : MonoBehaviour
             FindNearestObjectBasic();
             return;
         }
+
         //Create an overlap sphere of the given radius
         Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
+
         //check the distance to all colliders found
         FindNearestInGroup(colliders);
     }
@@ -92,10 +119,18 @@ public class Player : MonoBehaviour
     /// <param name="objects">A list of all of the <see cref="LevelObject"/>s to check for a potential new closest object</param>
     private void FindNearestInGroup(List<GameObject> objects)
     {
+        //check all objects provided
         foreach (GameObject levelObject in objects)
         {
-            //compare the distance with the stored greatest distance, and mark the object as the new closest if necessary
+            //compare the distance between this object and the player wiht with the stored greatest distance
             distance = Vector3.Distance(transform.position, levelObject.transform.position);
+
+            /*
+             * if this is the new closest object, mark it as such but don't update everything yet, 
+             * as that would both potentially alter the rest of the iteration and lead to multiple
+             * unecessary operations to happen when only the final decided closest object actually
+             * warrants resetting all of the other values
+             */
             if (distance < closestDistance)
             {
                 newClosestObject = levelObject;
@@ -103,6 +138,7 @@ public class Player : MonoBehaviour
             }
         }
 
+        //now update the closest object here at the end
         UpdateClosest();
     }
 
@@ -112,18 +148,26 @@ public class Player : MonoBehaviour
     /// <param name="objects">A list of all of the colliders of objects to check for a potential new closest object</param>
     private void FindNearestInGroup(Collider[] objects)
     {
+        //check all objects provided
         foreach (Collider levelObject in objects)
         {
-            //compare the distance with the stored greatest distance, and mark the object as the new closest if necessary
+            //compare the distance between this collider and the player with with the stored greatest distance
             distance = Vector3.Distance(transform.position, levelObject.transform.position);
+
+            /*
+             * if this is the new closest object, mark it as such but don't update everything yet, 
+             * as that would both potentially alter the rest of the iteration and lead to multiple
+             * unecessary calls to object renderers to happen when only the final decided closest 
+             * object actually warrants resetting the renderer updates
+             */
             if (distance < closestDistance)
             {
-                Debug.Log("new closest: " + distance + " from " + closestDistance);
                 newClosestObject = levelObject.gameObject;
                 closestDistance = distance;
             }
         }
 
+        //now update the closest object here at the end
         UpdateClosest();
     }
 
@@ -132,15 +176,17 @@ public class Player : MonoBehaviour
     /// </summary>
     private void UpdateClosest()
     {
-        //Save the highlighting for the end to prevent unnecessary calls to the renderer
+        //if there is a new closest object, update visuals to match
         if (newClosestObject && newClosestObject != closestObject)
         {
-            //unhighlight the old object, reassign the variable, and then highlight the new object
+            //unhighlight the old object if it exists
             if (closestObject)
             {
                 //null check for the very first time this check is run at the start of the game
                 closestObject.GetComponent<LevelObject>().SetHighlighted(false);
             }
+
+            //update the variable and highlight the new closest object
             closestObject = newClosestObject;
             closestObject.GetComponent<LevelObject>().SetHighlighted(true);
         }
@@ -163,12 +209,16 @@ public class Player : MonoBehaviour
         if (distance < closestDistance)
         {
             //if it is, immediately handle reassignment and highlighting since this is only a single-object check
-            Debug.Log("object was new closest");
             closestDistance = distance;
+
+            //unhighlight the old object if it exists
             if (closestObject)
             {
+                //null check for the very first time this check is run at the start of the game
                 closestObject.GetComponent<LevelObject>().SetHighlighted(false);
             }
+
+            //update the variable and highlight the new closest object
             closestObject = levelObject;
             closestObject.GetComponent<LevelObject>().SetHighlighted(true);
         }
@@ -177,11 +227,11 @@ public class Player : MonoBehaviour
     
     private void FixedUpdate()
     {
-        //keeping track of the start time of this frame to determine processing time
-        //DateTime before = DateTime.Now;
+        /*
+         * keeping track of the start time of this frame to determine processing time. Was originally using DateTime,
+         * but found this information far more useful in terms of seconds that could be broken into decimals
+         */
         float before = Time.realtimeSinceStartup;
-
-
 
         /*
          * update the current distance between the player and the current closest object for correct tracking. 
@@ -193,11 +243,10 @@ public class Player : MonoBehaviour
             closestDistance = Vector3.Distance(transform.position, closestObject.transform.position);
         }
 
-
         /*
          * below I will list a few optimization options, their strengths and benefits, and a bit of analysis I did on them
          * I let the program run for roughly 1000 frames while moving the player around and calculated the average length of a FixedUpdate call during that time
-         * In a longer setting I would have liked more time to give towards this kind of analysis, but I did what I could with the time I have
+         * In a longer setting I would have liked more time to give towards various trials of this kind of analysis, but I did what I could with the time I have
          * 
          * Additionally, here are a few analysis definitions:
          * in cluster: I spawn all objects within a small radius (20 for 2000 objects, 50 for 20000) and keep player inside of that radius
@@ -226,7 +275,7 @@ public class Player : MonoBehaviour
          * 20000 objects outside of cluster: 0.0001109541s average
          * 20000 objects sparse: 0.000115283s average
          */
-        FindNearestObjectBasic();
+        //FindNearestObjectBasic();
 
         /*
          * OPTION 2 - CURRENT SOLUTION
@@ -245,7 +294,8 @@ public class Player : MonoBehaviour
          * will always be running for all of these objects, which will lead to increased processing overhead on Unity's side.
          * I have all objects set as triggers, and have turned off collision between them which will hopefully decrease that overhead though
          * 
-         * Also, on startup, this willbe an essentially nonsensical solution, so the very first check will have to be run the basic way
+         * Also, on startup, this will be an essentially nonsensical solution requiring an almost infinitely sized sphere, 
+         * so the very first check will have to be run the basic way
          * 
          * Analysis results:
          * 10 objects: 2.594141e-05s average
@@ -256,16 +306,15 @@ public class Player : MonoBehaviour
          * 20000 objects outside of cluster: 7.163183e-05s average
          * 20000 objects sparse: 9.157765e-05s average
          */
-
-        //FindNearestObjectOverlap(closestDistance);
-
-
+        FindNearestObjectOverlap(closestDistance);
 
         //getting the end time of this frame to determine processing time
-        //DateTime after = DateTime.Now;
         float after = Time.realtimeSinceStartup;
-        //TimeSpan frameLength = after.Subtract(before);
+
+        //get the processing time for this frame
         frameProcessTime = after - before;
+
+        //update the average processing time
         averageProcessTime = (averageProcessTime * numFramesRun + frameProcessTime) / ++numFramesRun;
     }
 

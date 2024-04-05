@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<CoverageReport scope="Summary">
+  <Summary>
+    <Generatedon>4/5/2024 - 1:19:11 AM</Generatedon>
+    <Parser>MultiReportParser (2x OpenCoverParser)</Parser>
+    <Assemblies>1</Assemblies>
+    <Classes>4</Classes>
+    <Files>4</Files>
+    <Coveredlines>279</Coveredlines>
+    <Uncoveredlines>129</Uncoveredlines>
+    <Coverablelines>408</Coverablelines>
+    <Totallines>1127</Totallines>
+    <Linecoverage>68.3</Linecoverage>
+    <Coveredbranches>0</Coveredbranches>
+    <Totalbranches>0</Totalbranches>
+    <Coveredmethods>38</Coveredmethods>
+    <Totalmethods>48</Totalmethods>
+    <Methodcoverage>79.1</Methodcoverage>
+  </Summary>
+  <Coverage>
+    <Assembly name="NewAssembly" classes="4" coverage="68.3" coveredlines="279" coverablelines="408" totallines="1127" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="38" totalmethods="48" methodcoverage="79.1">
+      <Class name="GameIO" coverage="74.4" coveredlines="35" coverablelines="47" totallines="111" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="4" totalmethods="4" methodcoverage="100" />
+      <Class name="LevelObject" coverage="72.7" coveredlines="16" coverablelines="22" totallines="59" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="2" totalmethods="3" methodcoverage="66.6" />
+      <Class name="ObjectManager" coverage="60.8" coveredlines="149" coverablelines="245" totallines="670" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="21" totalmethods="29" methodcoverage="72.4" />
+      <Class name="Player" coverage="84" coveredlines="79" coverablelines="94" totallines="287" branchcoverage="" coveredbranches="0" totalbranches="0" coveredmethods="11" totalmethods="12" methodcoverage="91.6" />
+    </Assembly>
+  </Coverage>
+</CoverageReport>
