@@ -100,6 +100,74 @@ public class PlayerTest
     }
 
     /// <summary>
+    /// tests <see cref="Player.FindNearestObjectSecondPlace"/>
+    /// </summary>
+    [Test]
+    public void TestGetNearestSecondPlace()
+    {
+        //set up a list of the existing level objects and give it to the player
+        List<GameObject> levelObjects = new List<GameObject> { item.gameObject, bot.gameObject };
+        player.levelObjects = levelObjects;
+
+        //try to find the nearest object
+        player.FindNearestObjectSecondPlace();
+
+        //ensure the closest object is highlighted
+        Assert.AreEqual(item.GetMat(true).color, item.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it still works on a repeat at the same positions
+
+        player.FindNearestObjectSecondPlace();
+
+        Assert.AreEqual(item.GetMat(true).color, item.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it properly updates when the player moves
+
+        player.transform.position = new Vector3(0, -1.5f, 0);
+        player.FindNearestObjectSecondPlace();
+
+        Assert.AreEqual(bot.GetMat(true).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item.GetMat(false).color, item.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it properly updates when a new closest item is spawned
+
+        Item item2 = manager.AddItem(new Vector3(.1f, -1.5f, 0)).GetComponent<Item>();
+
+        //set the player's objects to include the new item
+        levelObjects.Add(item2.gameObject);
+        player.levelObjects = levelObjects;
+
+        //needed to reset secondplace
+        player.CheckObjectDistance(item2.gameObject);
+
+        player.FindNearestObjectSecondPlace();
+
+        Assert.AreEqual(item2.GetMat(true).color, item2.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item.GetMat(false).color, item.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it stays the same when a new item is spawned that isn't the closest
+
+        Item item3 = manager.AddItem(new Vector3(3f, 1.5f, 0)).GetComponent<Item>();
+
+        //set the player's objects to include the new item
+        levelObjects.Add(item3.gameObject);
+        player.levelObjects = levelObjects;
+
+        //needed to reset secondplace
+        player.CheckObjectDistance(item3.gameObject);
+
+        player.FindNearestObjectSecondPlace();
+
+        Assert.AreEqual(item2.GetMat(true).color, item2.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item.GetMat(false).color, item.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item3.GetMat(false).color, item3.GetComponent<Renderer>().sharedMaterial.color);
+    }
+
+    /// <summary>
     /// tests <see cref="Player.FindNearestObjectOverlap"/>
     /// </summary>
     [Test]
@@ -152,6 +220,74 @@ public class PlayerTest
         levelObjects.Add(item3.gameObject);
         player.levelObjects = levelObjects;
         player.FindNearestObjectOverlap();
+
+        Assert.AreEqual(item2.GetMat(true).color, item2.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item.GetMat(false).color, item.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item3.GetMat(false).color, item3.GetComponent<Renderer>().sharedMaterial.color);
+    }
+
+    /// <summary>
+    /// tests <see cref="Player.FindNearestObjectOverlapSecondPlace"/>
+    /// </summary>
+    [Test]
+    public void TestGetNearestOverlapSecondPlace()
+    {
+        //set up a list of the existing level objects and give it to the player
+        List<GameObject> levelObjects = new List<GameObject> { item.gameObject, bot.gameObject };
+        player.levelObjects = levelObjects;
+
+        //try to find the nearest object
+        player.FindNearestObjectOverlapSecondPlace();
+
+        //ensure the closest object is highlighted
+        Assert.AreEqual(item.GetMat(true).color, item.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it still works on a repeat at the same positions
+
+        player.FindNearestObjectOverlapSecondPlace();
+
+        Assert.AreEqual(item.GetMat(true).color, item.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it properly updates when the player moves
+
+        player.transform.position = new Vector3(0, -1.5f, 0);
+        player.FindNearestObjectOverlapSecondPlace();
+
+        Assert.AreEqual(bot.GetMat(true).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item.GetMat(false).color, item.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it properly updates when a new closest item is spawned
+
+        Item item2 = manager.AddItem(new Vector3(.1f, -1.5f, 0)).GetComponent<Item>();
+
+        //set the player's objects to include the new item
+        levelObjects.Add(item2.gameObject);
+        player.levelObjects = levelObjects;
+
+        //needed to reset secondplace
+        player.CheckObjectDistance(item2.gameObject);
+
+        player.FindNearestObjectOverlapSecondPlace();
+
+        Assert.AreEqual(item2.GetMat(true).color, item2.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);
+        Assert.AreEqual(item.GetMat(false).color, item.GetComponent<Renderer>().sharedMaterial.color);
+
+        //ensure it stays the same when a new item is spawned that isn't the closest
+
+        Item item3 = manager.AddItem(new Vector3(3f, 1.5f, 0)).GetComponent<Item>();
+
+        //set the player's objects to include the new item
+        levelObjects.Add(item3.gameObject);
+        player.levelObjects = levelObjects;
+
+        //needed to reset secondplace
+        player.CheckObjectDistance(item3.gameObject);
+
+        player.FindNearestObjectOverlapSecondPlace();
 
         Assert.AreEqual(item2.GetMat(true).color, item2.GetComponent<Renderer>().sharedMaterial.color);
         Assert.AreEqual(bot.GetMat(false).color, bot.GetComponent<Renderer>().sharedMaterial.color);

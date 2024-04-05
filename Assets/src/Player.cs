@@ -1,6 +1,9 @@
+using Codice.Client.BaseCommands;
+using JetBrains.Annotations;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
@@ -24,14 +27,28 @@ public class Player : MonoBehaviour
 
 
     [SerializeField, Tooltip("the current closest object")] private GameObject closestObject;
+    [SerializeField, Tooltip("the current second closest object")] private GameObject secondClosestObject;
 
     //the new closest object; defining this variable here to avoid repeated declaration
     private GameObject newClosestObject;
 
+    //the new second closest object; defining this variable here to avoid repeated declaration
+    private GameObject newSecondClosestObject;
+
     [SerializeField, Tooltip("the current distance between the player and the closest object")] private float closestDistance = float.MaxValue;
+    [SerializeField, Tooltip("the current distance between the player and the second closest object")] private float secondClosestDistance = float.MaxValue;
+
+    //the distance from the player and the closest object last time a new closest object was found
+    private float lastDistance;
+
+    //the distance from the player and the second closest object last time a new closest object was found
+    private float lastSecondDistance;
 
     //the distance between this transform and another; defining this variable here to avoid repeated declaration
     private float distance;
+
+    //the position the player was when they last found a new closest object. Used for second place distance calculations
+    private Vector3 lastPos;
 
     /*
      * this is a set of publicly viewable metrics keeping track of the number of milliseconds it takes to complete a full update frame's worth of checks on average
@@ -83,6 +100,43 @@ public class Player : MonoBehaviour
     }
 
     /// <summary>
+    /// Searches through all of the tracked <see cref="LevelObject"/>s to find the closest two to the <see cref="Player"/>. 
+    /// If there is a new closest object, updates object highlighting to reflect that and starts tracking the distance from the new two closest objects
+    /// Once a second place has been set, will not run a check again until the player has moved a distance from the position where they were when finding the closest object
+    /// equal to half the difference between the distances of first and second place
+    /// </summary>
+    public void FindNearestObjectSecondPlace()
+    {
+        //do a sanity check to ensure that we don't get any exceptions thrown throughout
+        if (levelObjects == null || levelObjects.Count <= 0)
+        {
+            return;
+        }
+
+        //for the second place implementation, ensure that if there is a second place object and the player has not yet moved far enough that the check is not run
+        if (secondClosestObject)
+        {
+            float distanceTraveled = Vector3.Distance(transform.position, lastPos);
+            if (distanceTraveled < (lastSecondDistance - lastDistance) / 2)
+            {
+                return;
+            }
+
+            //calculate the distance to the second closest object
+            secondClosestDistance = Vector3.Distance(transform.position, secondClosestObject.transform.position);
+        }
+
+       
+
+        /*
+         * In this version, check every object stored in the player's list. 
+         * With more time I'd consider making a sort of sorted List structure such that only object that could possible have become the new closest will be checked 
+         * based on distance traveled by the player
+         */
+        FindNearestInGroupSecondPlace(levelObjects);
+    }
+
+    /// <summary>
     /// Creates an overlapSphere around the player using the distance to the closest object as its radius, 
     /// and checks if any caught <see cref="LevelObject"/>s are closer to the <see cref="Player"/> than the current closest object.
     /// </summary>
@@ -111,6 +165,51 @@ public class Player : MonoBehaviour
 
         //check the distance to all colliders found
         FindNearestInGroup(colliders);
+    }
+
+    /// <summary>
+    /// Creates an overlapSphere around the player using the distance to the closest object as its radius, 
+    /// and checks if any caught <see cref="LevelObject"/>s are closer to the <see cref="Player"/> than the current closest object.
+    /// </summary>
+    public void FindNearestObjectOverlapSecondPlace()
+    {
+
+        //for the second place implementation, ensure that if there is a second place object and the player has not yet moved far enough that the check is not run
+        if(secondClosestObject)
+        {
+            float distanceTraveled = Vector3.Distance(transform.position, lastPos);
+            if(distanceTraveled < (lastSecondDistance - lastDistance) / 2)
+            {
+                return;
+            }
+
+            //calculate the distance to the second closest object
+            secondClosestDistance = Vector3.Distance(transform.position, secondClosestObject.transform.position);
+        }
+
+        //use the closest distance as the radius by default
+        FindNearestObjectOverlapSecondPlace(closestDistance);
+    }
+
+    /// <summary>
+    /// Creates an overlapSphere around the player with the given radius, 
+    /// and checks if any caught <see cref="LevelObject"/>s are closer to the <see cref="Player"/> than the current two closest objects.
+    /// </summary>
+    /// <param name="radius">The radius of the sphere to create</param>
+    public void FindNearestObjectOverlapSecondPlace(float radius)
+    {
+        //If there is no closest object to check from, this check becomes arbitrary and potentially far less efficient, so it should be passed over to the basic version
+        if (!closestObject)
+        {
+            FindNearestObjectSecondPlace();
+            return;
+        }
+
+        //Create an overlap sphere of the given radius
+        Collider[] colliders = Physics.OverlapSphere(transform.position, radius);
+
+        //check the distance to all colliders found
+        FindNearestInGroupSecondPlace(colliders);
     }
 
     /// <summary>
@@ -145,6 +244,64 @@ public class Player : MonoBehaviour
     /// <summary>
     /// Checks all <see cref="LevelObject"/>s within the specified group to see if any are closer than the current closest object
     /// </summary>
+    /// <param name="objects">A list of all of the <see cref="LevelObject"/>s to check for a potential new closest object</param>
+    private void FindNearestInGroupSecondPlace(List<GameObject> objects)
+    {
+        //set this to null so its easy to determine if there is any second object at all
+        newSecondClosestObject = null;
+
+        //check all objects provided
+        foreach (GameObject levelObject in objects)
+        {
+            //compare the distance between this object and the player wiht with the stored greatest distance
+            distance = Vector3.Distance(transform.position, levelObject.transform.position);
+
+            /*
+             * if this is the new closest object, mark it as such but don't update everything yet, 
+             * as that would both potentially alter the rest of the iteration and lead to multiple
+             * unecessary operations to happen when only the final decided closest object actually
+             * warrants resetting all of the other values
+             * 
+             * Similarly, for code clarity we want to wait to the end to update the second closest,
+             * even though there are no renderer updates
+             */
+            if (distance < closestDistance)
+            {
+                /*
+                 * if this isn't the current closest object, 
+                 * it bumps the closest object down to second place
+                 */
+                if (levelObject != closestObject)
+                {
+                    newSecondClosestObject = newClosestObject;
+                    secondClosestDistance = closestDistance;
+                }
+
+                //update the closest
+                newClosestObject = levelObject;
+                closestDistance = distance;
+
+            }
+            /*
+             * if this wasn't new new closest object, check it against second place.
+             * even if a new closest object isn't found, a new second place could lead to more time without needing additional checks
+             */
+            else if (distance < secondClosestDistance && levelObject != closestObject)
+            {
+                newSecondClosestObject = levelObject;
+                secondClosestDistance = distance;
+            }
+        }
+
+        //now update the closest object here at the end
+        UpdateClosestSecondPlace();
+
+
+    }
+
+    /// <summary>
+    /// Checks all <see cref="LevelObject"/>s within the specified group to see if any are closer than the current closest object
+    /// </summary>
     /// <param name="objects">A list of all of the colliders of objects to check for a potential new closest object</param>
     private void FindNearestInGroup(Collider[] objects)
     {
@@ -172,6 +329,65 @@ public class Player : MonoBehaviour
     }
 
     /// <summary>
+    /// Checks all <see cref="LevelObject"/>s within the specified group to see if any are closer than the current closest object
+    /// </summary>
+    /// <param name="objects">A list of all of the colliders of objects to check for potential new closest objects</param>
+    private void FindNearestInGroupSecondPlace(Collider[] objects)
+    {
+        //set this to null so its easy to determine if there is any second object at all
+        newSecondClosestObject = null;
+
+
+        //check all objects provided
+        foreach (Collider levelObject in objects)
+        {
+            //compare the distance between this object and the player wiht with the stored greatest distance
+            distance = Vector3.Distance(transform.position, levelObject.transform.position);
+
+            /*
+             * if this is the new closest object, mark it as such but don't update everything yet, 
+             * as that would both potentially alter the rest of the iteration and lead to multiple
+             * unecessary operations to happen when only the final decided closest object actually
+             * warrants resetting all of the other values
+             * 
+             * Similarly, for code clarity we want to wait to the end to update the second closest,
+             * even though there are no renderer updates
+             */
+            if (distance < closestDistance)
+            {
+                /*
+                 * if this isn't the current closest object, 
+                 * it bumps the closest object down to second place
+                 */
+                if (levelObject.gameObject != closestObject)
+                {
+                    newSecondClosestObject = newClosestObject;
+                    secondClosestDistance = closestDistance;
+                }
+
+                //update the closest
+                newClosestObject = levelObject.gameObject;
+                closestDistance = distance;
+
+            }
+            /*
+             * if this wasn't new new closest object, check it against second place.
+             * even if a new closest object isn't found, a new second place could lead to more time without needing additional checks
+             */
+            else if (distance < secondClosestDistance && levelObject.gameObject != closestObject)
+            {
+                newSecondClosestObject = levelObject.gameObject;
+                secondClosestDistance = distance;
+            }
+        }
+
+        //now update the closest object here at the end
+        UpdateClosestSecondPlace();
+
+
+    }
+
+    /// <summary>
     /// If there is a new closest <see cref="LevelObject"/>, updates the visual highlight and sets a new object to track
     /// </summary>
     private void UpdateClosest()
@@ -189,6 +405,70 @@ public class Player : MonoBehaviour
             //update the variable and highlight the new closest object
             closestObject = newClosestObject;
             closestObject.GetComponent<LevelObject>().SetHighlighted(true);
+        }
+    }
+
+    /// <summary>
+    /// If there is a new closest <see cref="LevelObject"/>, updates the visual highlight and sets a new object to track.
+    /// Additionally, sets the new second closest object and updates related fields
+    /// </summary>
+    private void UpdateClosestSecondPlace()
+    {
+        //if either of the two change, updating the recorded distances is required
+        bool changedObjects = false;
+
+        //if there is a new closest object, update visuals to match
+        if (newClosestObject && newClosestObject != closestObject)
+        {
+            changedObjects = true;
+
+            //unhighlight the old object if it exists
+            if (closestObject)
+            {
+                //null check for the very first time this check is run at the start of the game
+                closestObject.GetComponent<LevelObject>().SetHighlighted(false);
+            }
+
+            //update the variable and highlight the new closest object
+            closestObject = newClosestObject;
+            closestObject.GetComponent<LevelObject>().SetHighlighted(true);
+        }
+
+        //if the second closest object has changed, update that here
+        if(newSecondClosestObject != secondClosestObject)
+        {
+            changedObjects = true;
+            secondClosestObject = newSecondClosestObject;
+        }
+
+        //if the second closest object doesn't exist anymore, set its distance to the float max for easier calculations
+        if (!secondClosestObject)
+        {
+            secondClosestDistance = float.MaxValue;
+            return;
+        }
+
+        //even if neither object has changed, if this moves us in a favorable direction such that we can extend our safe zone, do so
+        if(!changedObjects)
+        {
+            //calculate the current and stored distance differences
+            float secondDist = Vector3.Distance(secondClosestObject.transform.position, transform.position);
+            float currentDistDiff = secondDist - distance;
+            float lastDistDiff = lastSecondDistance - lastDistance;
+
+            //if the current difference is greater, then we should update fields to extend our safe zone
+            if(currentDistDiff > lastDistDiff)
+            {
+                changedObjects = true;
+            }
+        }
+
+        //if something has changed (or we've manually set this to true), update the stored fields for safe zone calculations
+        if(changedObjects)
+        {
+            lastDistance = closestDistance;
+            lastSecondDistance = Vector3.Distance(secondClosestObject.transform.position, transform.position);
+            lastPos = transform.position;
         }
     }
 
@@ -221,6 +501,13 @@ public class Player : MonoBehaviour
             //update the variable and highlight the new closest object
             closestObject = levelObject;
             closestObject.GetComponent<LevelObject>().SetHighlighted(true);
+
+            /*
+             * unfortunately, without looping through the whole list here, we cannot properly check on the status of the second place object or the safe zone,
+             * (and doing so here would not be particularly thread-safe) so we need to turn off the safe zone to trigger a full calculation next turn if using secondplace algorithms
+             */
+            secondClosestObject = null;
+            secondClosestDistance = float.MaxValue;
         }
     }
 
@@ -252,10 +539,12 @@ public class Player : MonoBehaviour
          * in cluster: I spawn all objects within a small radius (20 for 2000 objects, 50 for 20000) and keep player inside of that radius
          * outside of cluster: I spawn all objects within a small radius and keep player outside of that radius
          * sparse: I spawn all objects within a wide radius (200 for 2000 objects, 5000 for 20000) and keep player inside of that radius
+         * 
+         * In all of these cases, the objects are half bot, half item
          */
 
         /*
-         * OPTION 1
+         * OPTION 1: BASIC
          * In the most basic form of this solution, you check for a new closest object every frame. 
          * This will ensure the correct object is always highlighted, and at low object counts won't be a problem
          * But at higher counts this will start to become quite inefficient. 
@@ -278,7 +567,39 @@ public class Player : MonoBehaviour
         //FindNearestObjectBasic();
 
         /*
-         * OPTION 2 - CURRENT SOLUTION
+         * OPTION 2: SECONDPLACE
+         * In this form of the solution, I've taken the basic algorithm and added a bit of extra information to be tracked.
+         * By also tracking the second closest object, I'm able to determine a safe zone around the player's position
+         * such that the closest object cannot change unless they move outside of the zone or a new object is spawned.
+         * This zone is a sphere with a radius equal to half of the difference between the distance from the closest object to the player and from the second closest to the player
+         * I can prove this since that radius is the absolute minimum distance that could be traveled until the closest and second closest objects are equidistant
+         * from the player (in the scenario that the 3 objects fall on a line like so: 1--P---2), and since no object is closer than the first or second object,
+         * that sphere is entirely safe. 
+         * 
+         * This math is incredibly useful, as it allows me to complete ignore checking unless the player moves that far away from their origin point, outside of the safe zone
+         * This is optimal for solutions where the player is moving slowly or in a light environment, as it will go for longer periods of time without having to rerun its checks.
+         * 
+         * However, with lots of objects or when moving quickly, it will run slightly slower than the basic version.
+         * 
+         * I was actually a bit surprised by how poorly this one fared. Granted, it *could* be an efficient solution for certain systems/games/scenarios,
+         * but when covering all arbitrary solutions and receiving high rates of movement, it just couldn't keep up
+         * 
+         * **For these tests, I continually moved the player around. When not moving, the operation time typically falls somewhere around the .001ms-.01ms range, 
+         * and drastically reduces the average time. But I wanted to test how much it would drag the system down if it was faster moving.
+         * 
+         * Analysis results:
+         * 10 objects: 1.151814e-05s average
+         * 2000 objects in cluster: 0.000557566s average
+         * 2000 objects outside of cluster: 0.0008098574s average
+         * 2000 sparse: 0.0003685465S average
+         * 20000 objects in cluster: 0.001778917s average
+         * 20000 objects outside of cluster: 0.002842159s average
+         * 20000 sparse: 0.002938255s average
+         */
+        //FindNearestObjectSecondPlace();
+
+        /*
+         * OPTION 3: OVERLAP
          * In this version, I simply leverage Unity's physics and collisions systems to be my best friend.
          * I have lots of ideas of how I could optimize this system, and may still implement some, 
          * But I also imagine that 
@@ -306,7 +627,34 @@ public class Player : MonoBehaviour
          * 20000 objects outside of cluster: 7.163183e-05s average
          * 20000 objects sparse: 9.157765e-05s average
          */
-        FindNearestObjectOverlap(closestDistance);
+        //FindNearestObjectOverlap();
+
+        /*
+         * Option 4: OVERLAP SECONDPLACE - CURRENT SOLUTION
+         * 
+         * In this version, I combine options 2 and 3 into a hybrid solution. 
+         * I use overlapspheres to check for the closest objects, but still implement the safe zone checks to reduce the frequency of my calls
+         * 
+         * This does benefit me when moving slowly and in sparse environments especially, and reducing the need to make overlapsphere calls is very valuable,
+         * but I was very surprised by just how much this sped up my system. It ran twice as fast as the base overlap version in some cases which was shocking to me, 
+         * as I expected only a marginal increase in performance. However, this turned out to be the most effective method, and as such is the one I will be using in my final submission
+         * The combination of the benefits from swapping to overlap and adding the secondplace check are an effective pair
+         * 
+         * (I will admit, with the time I had I cannot guarantee a static testing environment. 
+         * There very well could have been fluctuations in memory usage/cpu performance that I was not tracking which could have affected my results.
+         * With more time I would have done a more in-depth test, and probably printed to CSV files for further analysis, as I've done for projects before
+         * 
+         * **Once again, I am going to try to keep the player moving fairly regularly for these tests
+         * Analysis results
+         * 10 objects: 1.700793e-05s average
+         * 2000 objects in cluster: 2.381538e-052 average
+         * 2000 objects outside of cluster: 1.989095e-05s average
+         * 2000 objects sparse: 2.278455e-05s average
+         * 20000 objects in cluster: 4.200165e-05s average
+         * 20000 objects outside of cluster: 3.614843e-05s average
+         * 20000 objects sparse: 4.112445e-05s average
+         */
+        FindNearestObjectOverlapSecondPlace();
 
         //getting the end time of this frame to determine processing time
         float after = Time.realtimeSinceStartup;
