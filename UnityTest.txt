@@ -48,9 +48,37 @@ Allow the designer to choose the base color and highlight color for Items/Bots a
 ## Questions ##
 
  1. How can your implementation be optimized?
+
+I put a considerable amount of time into the optimization of my project, so I feel it's in a good place optimization-wise, but I know there are a few tricks I could do to make it run faster with enough time and analysis. For example, currently, I have a bit of a convoluted execution order in the Player script which requires multiple function calls and extra checks that are only useful for certain find nearest implementations.
+
+If I went through to reorder things to only fit one solution, it would definitely improve its speed. I'd also go through each of the unused optimizations I listed in the player script and analyze them to see which could actually be used to improve runtime speeds.  Lastly, I made all of these systems with an arbitrary number of objects placed in an arbitrarily sized area with an arbitrary density while a player moves around at an arbitrary speed.
+
+If I had a better idea of a more concrete goal for the project I could definitely rework parts of my find nearest to more effectively match that structure, I also think I could probably find some more minor optimizations with just a few more passes over my code once I've had to chance to step back from the project a bit more.
+
+
  2. How much time did you spend on your implementation?
+
+I spent roughly 10 hours & 15 minutes in total. The breakdown looks like this:
+     * ~2:40 getting the functional implementation and key-press spawning complete.
+     * ~2:35 to create the overlap optimization and implement save/load functionality.
+     * ~3:10 to implement unit testing and improve my XML docs.
+     * ~1:50 to implement the second-place optimizations and complete my analysis of different types of optimizations.
+
+
  3. What was most challenging for you?
+
+I think the most challenging part was probably just the conceptual challenge of optimizing this problem when the number of objects, position of objects, and speed of the player can all be arbitrary. I had multiple useful optimization ideas that I ended up not using at all because they were incredibly selective in their utility, and I had to build a kind of one-size-fits-all solution.
+     
+     It was a very interesting problem that I spent a lot of time thinking about, especially when I was supposed to be doing other things for school (whoops), and made me consider all of the possibilities more so than if I only had one particular problem set to think about. It was a fun exercise, and led me to create the analysis on the different optimization types that I hope you find interesting/useful!
+
  4. What else would you add to this exercise?
+
+If I could add one thing to this project it would be to add different checkers for different types of "closest" checking. Currently, I only calculate the distance between the centers of objects, rather than the absolute nearest pieces of objects. This means that in my current implementation, many factors like object size and shape are not taken into account when determining the closest object. If I wanted to resolve this problem I'd have to implement some sort of Raycasting or Spherecasting when determining closest objects.
+    
+     Additionally, I think this project is a very simple yet extra convoluted version of a system that determines what object you interact with when interacting with objects in a game. The closest object gets highlighted, and the game now knows that is the object to interact with. Turning this project into that would involve checking some angles for FOV and doing some ray casts to make sure the object is not blocked from the player. Additionally, adding some more in-game types of movement to the player would be good to emulate that kind of system more effectively.
+
+     Lastly, I appreciated that this project had tasks from very different areas of development (Unit Tests->testing, XML Docs->Documentation, Optimization->backend programming, Adding Items on Key Press->a bit of gameplay programming, read/write to file->backend systems, allowing color change->making designer tools), but I think could potentially have dug a little bit deeper into some areas like tools or graphics with some more optional goals.
+
 
 ## Optional ##
 
