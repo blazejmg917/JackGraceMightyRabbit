@@ -52,3 +52,6 @@ I am excited to share my finished project with you, and I hope that it meets you
      Additionally, I think this project is a very simple yet extra convoluted version of a system that determines what object you interact with when interacting with objects in a game. The closest object gets highlighted, and the game now knows that is the object to interact with. Turning this project into that would involve checking some angles for FOV and doing some ray casts to make sure the object is not blocked from the player. Additionally, adding some more in-game types of movement to the player would be good to emulate that kind of system more effectively.
 
      Lastly, I appreciated that this project had tasks from very different areas of development (Unit Tests->testing, XML Docs->Documentation, Optimization->backend programming, Adding Items on Key Press->a bit of gameplay programming, read/write to file->backend systems, allowing color change->making designer tools), but I think could potentially have dug a little bit deeper into some areas like tools or graphics with some more optional goals.
+
+
+If you'd like to view the full initial document with my answers attached, you can click [here](UnityTest)
