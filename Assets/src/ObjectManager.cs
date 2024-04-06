@@ -687,7 +687,7 @@ public class ObjectManager : MonoBehaviour
     /// <param name="itemSpawnCount">the number of items to be spawned by the <see cref="AddRandomItemsEditor"/> method</param>
     public void SetItemSpawnCount(int itemSpawnCount)
     {
-        numBotsToSpawn = itemSpawnCount;
+        numItemsToSpawn = itemSpawnCount;
     }
 
 
