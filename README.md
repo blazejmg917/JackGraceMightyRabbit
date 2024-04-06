@@ -47,7 +47,7 @@ Just above these, under the "Colors" header, you will see 4 colors. By changing 
 
 ## Optional ##
 
-* Unit Tests: Edit mode Unit Tests have been added to >60% line coverage across 22 tests. This tests all important functionality for the project. I Would have added play mode tests, but it felt largely redundant to do so. All the necessary testing could be done in edit mode. The only parts of scripts that weren't tested were things like null checks in Awake functions, and testing for those aren't particularly useful.
+* Unit Tests: Edit mode Unit Tests have been added to >70% line coverage across 22 tests. This tests all important functionality for the project. I Would have added play mode tests, but it felt largely redundant to do so. All the necessary testing could be done in edit mode. The only parts of scripts that weren't tested were things like null checks in Awake functions, and testing for those aren't particularly useful.
   
 * XML Docs: I actually already use XML Docs in Unity coding as my own personal standard, as I think the hookup to Visual Studio is incredibly useful both to help remind myself of what functions do and to assist further developers in learning how to work within my codebases. So I added XML Docs throughout the code while originally programming it, and only had to do some small tweaks here and there. I did try to use the <see> tags more frequently in this project than I usually have, which I think is something useful that I should try to do more often in my own code. But anyway, I've added XML Docs throughout.
   
