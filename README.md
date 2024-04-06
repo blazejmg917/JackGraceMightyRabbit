@@ -5,6 +5,37 @@ This is my submission for the Mighty Rabbit Code Test.
 Thank you so much for giving me this test to work on! I thought it was a pretty interesting one to work on with a very simple base idea and more complex optional requirements to build on.
 I am excited to share my finished project with you, and I hope that it meets your expectations!
 
+## User Guide ##
+
+**To Set up the level**
+
+The main way to set up the level is with the ObjectManager class.
+If you select the object in the scene and look at its component in the inspector view, you'll see 4 fields and 3 buttons at the bottom under the "Spawning" header.
+* NumBotsToSpawn is the number of bots to spawn randomly when you press the Spawn Bots button
+* NumItemsToSpawn is the number of items to spawn randomly when you press the Spawn Items button
+* SpawnOrigin is the starting point from where spawn positions are calculated
+* SpawnRadius is how far away from the spawn origin an object can be spawned
+
+* Spawn Bots will spawn random bots based on the parameters you set
+* Spawn Items will spawn random items based on the parameters you set
+* Clear Level will destroy all existing bots and items hooked up to the object manager
+
+
+**To adjust colors in edit mode**
+
+Just above these, under the "Colors" header, you will see 4 colors. By changing these colors in edit mode you will dynamically update the materials shared by objects in the project, manipulating their base and highlighted colors
+
+
+**To Spawn new objects in game:**
+* Press "I" to spawn a new item
+* Press "B" to spawn a new bot
+* These functions still are bound by the limits set by spawnOrigin and spawnRadius\
+
+
+**To Save and load game**
+* Press "S" to save the current scene to your save file (you only have one file)
+* Press "L" to load the current scene from the save file (if it exists)
+
 
 ## Functional Goals ##
 
