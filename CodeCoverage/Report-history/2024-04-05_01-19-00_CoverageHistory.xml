@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="yes"?>
-<coverage version="1.0" date="2024-04-05_01-19-00" tag="">
-  <assembly name="NewAssembly">
-    <class name="GameIO" coveredlines="35" coverablelines="47" totallines="111" coveredbranches="0" totalbranches="0" />
-    <class name="LevelObject" coveredlines="16" coverablelines="22" totallines="59" coveredbranches="0" totalbranches="0" />
-    <class name="ObjectManager" coveredlines="149" coverablelines="245" totallines="670" coveredbranches="0" totalbranches="0" />
-    <class name="Player" coveredlines="79" coverablelines="94" totallines="287" coveredbranches="0" totalbranches="0" />
-  </assembly>
-</coverage>
