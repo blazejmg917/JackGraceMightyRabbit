@@ -501,6 +501,7 @@ public class Player : MonoBehaviour
             //update the variable and highlight the new closest object
             closestObject = levelObject;
             closestObject.GetComponent<LevelObject>().SetHighlighted(true);
+            newClosestObject = closestObject;
 
             /*
              * unfortunately, without looping through the whole list here, we cannot properly check on the status of the second place object or the safe zone,
@@ -665,5 +666,76 @@ public class Player : MonoBehaviour
         //update the average processing time
         averageProcessTime = (averageProcessTime * numFramesRun + frameProcessTime) / ++numFramesRun;
     }
+
+    /*
+     * A few search styles a considered but didn't implement and why:
+     */
+
+
+    /* 
+     * Option 5: GROUPING
+     * 
+     * This idea was to split the objects into groups on startup based on their position, 
+     * and then only check the distance of objects in the group the player was in and the adjacent groups.
+     * This would have cut down on the number of objects that would need to be checked from the basic version
+     * 
+     * I decided not to implement this as the overlap sphere was simply a far more effective method of accomplishing the same task.
+     * Additionally, this method would work very well for a game with a fixed level structure where I knew what objects would be 
+     * important to have loaded into certain level segments based on the player's position,
+     * But in this project where it was an arbitrary number of objects placed randomly, 
+     * it would either be a far more costly operation on startup to properly split the objects into equal groups, 
+     * Or I would have incredibly unbalanced groups where some are more effective than others
+     * 
+     * So in the end, I decided to drop this idea and simply implement the overlap sphere version instead
+     */
+
+
+    /*
+     * Option 6: GRAPH
+     * 
+     * This idea was to create a graph structure such that every object was a node with dynamically created edges between them. 
+     * On startup, this graph would be created between the existing objects based on their spacing from each other to make the graph, 
+     * and then whenever the player moved, the objects within the graph would pass along the next object in the direction the player is moving
+     * This would prevent the need for long loops through objects to compare distance, as it would be a simple set of checks along edges.
+     * 
+     * Ultimately, I decided not to implement this for a few reasons.
+     * Firstly, while I could guarantee an effective implementation on a small set of objects, 
+     * I was never able to suitably convince myself of this method's benefit over the overlap sphere version, 
+     * especially given how much longer it could take to create.
+     * In large, dense areas the grid would have to have an incredibly dense network of edges to work with, 
+     * and since the player can be moved at incredibly high speeds, 
+     * you could still end up in a situation where you have to loop through a lot of edges to get to your destinatino
+     * But I think the final nail in the coffin for this method was being able to add new objects. 
+     * Dynamically updating the graph at runtime to allow for new objects to be created would really be a pain, 
+     * as each added object would need to be able to properly orient itself in the grid,
+     * Break any Edges it interfered with, and then create new edges between itself and other objects
+     * 
+     * Of all the methods, if I had infinite time to work on one this would be the one I would be most interested in going back to try creating.
+     * But with how much school work I've already procrastinated to put time into this project it would simply have taken too much time
+     */
+
+    /*
+     * Option 7: SORTED
+     * 
+     * This idea was where the motivation for the second place implementations started.
+     * Originally the idea was that whenever a new closest object was found, 
+     * it would sort all of the existing level objects by the distance from the player when the new closest object was set
+     * And then when you would go to search for a new closest object, you would loop through the list and check if that particular object's safe zone had been exited
+     * If that were the case, you would now check if that object was a new closest object
+     * And if it weren't the case you would instantly end execution with the knowledge that none after could be the new closest.
+     * 
+     * This was an interesting idea, and would have potentially been an improvement to the basic method under certain circumstances
+     * But there were some pretty major flaws in this optimization being applicable to arbitrary situations
+     * Firstly, this is effective when I can guarantee that far more time will be spent simply moving around small areas than actually finding new closest objects.
+     * Because while this cuts down the frame by frame operation cost, sorting the list would be an O(nlog(n)) operation.
+     * This meant that if I could guarantee you'd go at least log(n) frames between finding new objects I could prove this to be an effective method,
+     * But when you can move the player at arbitrary speeds through an arbitrary number of objects at an arbitrary density, I couldn't be sure that would happen
+     * Also, right around the time I came up with this idea I was also thinking through the overlap idea, which seemed both far simpler and a far better
+     * 
+     * However, I did like the idea of a safe zone, and decided that the O(1) operation cost of a single distance check at the start of a loop to at least 
+     * check on second place would be a worthwhile idea, so I decided that while I would drop the SORTED option, I would keep that second place safe zone optimization at least
+     */
+
+
 
 }
